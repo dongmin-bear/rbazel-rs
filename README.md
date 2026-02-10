@@ -1,92 +1,66 @@
 # rbazel-rs
 
-`rbazel-rs` is a Rust implementation of the `rbazel` workflow: run Bazel on a remote machine against the *exact* local git `HEAD`, then pull the resulting build artifacts back to your local machine.
+`rbazel-rs` runs Bazel on a remote server using your local git `HEAD`, then pulls artifacts back to your machine.
 
-It is config-driven (remote host + remote repo path + cache paths) and intended for setups where remote hardware/OS is required (e.g., dedicated build servers).
+Artifacts are extracted to `./_rbazel_artifacts/<branch>/<timestamp>/`.
 
-## What it does
+## Quick Start
 
-- Verifies required local commands exist: `ssh`, `rsync`, `git`, `tar`
-- Requires a clean local git working tree (no staged/unstaged changes)
-- Computes your current `HEAD` and branch name
-- SSHes to the configured remote server
-- On the remote server:
-  - fetches updates
-  - checks out the local `HEAD` commit (detached)
-  - runs `bazel <subcommand> [opts] [targets]` with a remote output/cache root
-  - collects output files and creates a tarball
-- `rsync`s the tarball back locally and extracts it
-- Prints the output directory
+```bash
+curl -fsSL https://raw.githubusercontent.com/dongmin-bear/rbazel-rs/main/install.sh | bash
+rbazel-rs build //...
+```
 
-Artifacts are extracted to:
+Install a specific version:
 
-`./_rbazel_artifacts/<branch>/<timestamp>/`
+```bash
+curl -fsSL https://raw.githubusercontent.com/dongmin-bear/rbazel-rs/main/install.sh | bash -s -- v0.1.0
+```
+
+Private repo use:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dongmin-bear/rbazel-rs/main/install.sh | GITHUB_TOKEN=ghp_xxx bash
+```
 
 ## Installation
 
-### Option A: Install from GitHub Releases (recommended)
-
-This repo includes `install.sh` which downloads a release asset with `curl` and installs `rbazel-rs` into `~/.local/bin` (configurable).
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/dmkim/rbazel-rs/main/install.sh | bash
-curl -fsSL https://raw.githubusercontent.com/dmkim/rbazel-rs/main/install.sh | bash -s -- v0.1.0
-```
-
-Private repo note: set `GITHUB_TOKEN` before running the script.
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/dmkim/rbazel-rs/main/install.sh | GITHUB_TOKEN=ghp_xxx bash
-```
-
-### Option B: Build locally
+From source:
 
 ```bash
 cargo build --release
 install -m 0755 target/release/rbazel-rs ~/.local/bin/rbazel-rs
 ```
 
-Ensure `~/.local/bin` is on your `PATH`.
+Make sure `~/.local/bin` is in your `PATH`.
 
 ## Configuration
 
-`rbazel-rs` loads config from TOML. It looks for a config file in this order:
+Config file lookup order:
 
 1. `./rbazel_config.toml`
 2. `~/.config/rbazel/config.toml`
 
-Supported keys live under the `[rbazel]` table:
+Supported keys under `[rbazel]`:
 
-- `server_host` (string) - SSH destination, e.g. `user@10.0.0.10`
-- `server_repo_dir` (string) - absolute path to the repo on the remote host
-- `remote_cache_base` (string) - remote base directory for Bazel output/cache
-- `local_pull_base` (string) - local base directory for extracted artifacts
-- `remote_resource_path` (string, optional) - if set, used directly; otherwise defaults to `${remote_cache_base}/pennybot`
+- `server_host`: SSH destination, e.g. `user@10.0.0.10`
+- `server_repo_dir`: absolute path to remote repo
+- `remote_cache_base`: remote Bazel cache/output base path
+- `local_pull_base`: local artifact base path
+- `remote_resource_path` (optional): if set, used directly; if not set, defaults to `${remote_cache_base}/pennybot`
 
-### Precedence (important)
-
-Defaults are derived from environment variables, then overridden by the config file if present.
-
-Environment variables (used as defaults):
+Fallback environment variables:
 
 - `SERVER_HOST`
 - `SERVER_REPO_DIR`
 - `REMOTE_CACHE_BASE`
 - `LOCAL_PULL_BASE`
 
-If a config file is found, any keys set under `[rbazel]` override those defaults.
+If config file values are present, they override env/default values.
 
-### Example config
-
-See `rbazel_config.example.toml` for a template. Recommended setup:
-
-- Keep a machine-local config at `~/.config/rbazel/config.toml`
-- Optionally place a repo-local `rbazel_config.toml` for per-repo overrides
-- Do not commit `rbazel_config.toml` (this repo ignores it by default)
+Use `rbazel_config.example.toml` as your template.
 
 ## Usage
-
-`rbazel-rs` syntax mirrors Bazel:
 
 ```bash
 rbazel-rs [bazel] <subcommand> [bazel-args...]
@@ -99,33 +73,31 @@ rbazel-rs version
 rbazel-rs build //...
 rbazel-rs test //foo:bar
 rbazel-rs build --config=aarch64_musl //system/...:target
-
-# "bazel" prefix is accepted and ignored:
 rbazel-rs bazel build //...
 ```
 
-Notes on argument parsing:
+## How It Works
 
-- The first argument is treated as the Bazel subcommand (`build`, `test`, `run`, `query`, etc.)
-- Arguments that look like targets are treated as targets:
-  - start with `//`
-  - start with `:`
-  - start with `@` and contain `//`
-- Everything else is passed as options
+- Verifies local dependencies: `ssh`, `rsync`, `git`, `tar`
+- Requires a clean local git tree
+- Resolves local `HEAD` and branch
+- SSHes to remote server, syncs and checks out the same commit
+- Runs Bazel remotely and packages artifacts
+- Pulls and extracts artifacts locally
 
 ## Requirements
 
-Local machine:
+Local:
 
 - `ssh`, `rsync`, `git`, `tar`
 
-Remote machine:
+Remote:
 
 - `bash`, `git`, `bazel`, `tar`
-- common Unix tools (`find`, `sed`, `grep`) used by the remote script
+- `find`, `sed`, `grep`
 
 ## Troubleshooting
 
-- “dirty working tree”: commit/stash changes before running
-- “commit not found on server”: ensure the remote repo has access to the commit (fetch works, correct remote repo dir, correct permissions)
-- SSH failures: verify `server_host` and your SSH keys/agent
+- Dirty working tree: commit/stash first
+- Commit not found on server: verify remote repo path and fetch state
+- SSH failure: verify `server_host` and SSH auth
