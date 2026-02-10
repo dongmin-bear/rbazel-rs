@@ -36,13 +36,13 @@ jobs:
           set -euo pipefail
           ver="${{ github.ref_name }}"
           target="${{ matrix.target }}"
-          bin="target/${target}/release/rbazel-rs"
+          bin="target/${target}/release/rbazel"
           if [[ ! -f "$bin" ]]; then
             echo "missing binary: $bin" >&2
             exit 1
           fi
           mkdir -p dist
-          tar -C "target/${target}/release" -czf "dist/rbazel-rs-${ver}-${target}.tar.gz" rbazel-rs
+          tar -C "target/${target}/release" -czf "dist/rbazel-${ver}-${target}.tar.gz" rbazel
 
       - uses: actions/upload-artifact@v4
         with:

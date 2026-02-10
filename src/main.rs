@@ -4,7 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-const USAGE: &str = "Usage:\n  rbazel-rs [bazel] <subcommand> [bazel-args...]\n\nExamples:\n  rbazel-rs version\n  rbazel-rs build --config=aarch64_musl //system/...:target\n  rbazel-rs bazel build //...\n\nResult artifacts will be pulled to:\n  ./_rbazel_artifacts/<branch>/<timestamp>/\n";
+const USAGE: &str = "Usage:\n  rbazel [bazel] <subcommand> [bazel-args...]\n\nExamples:\n  rbazel version\n  rbazel build --config=aarch64_musl //system/...:target\n  rbazel bazel build //...\n\nResult artifacts will be pulled to:\n  ./_rbazel_artifacts/<branch>/<timestamp>/\n";
 
 const REMOTE_SCRIPT: &str = r#"set -euo pipefail
 
@@ -97,7 +97,7 @@ struct ConfigPartial {
 
 fn main() {
     if let Err(e) = run() {
-        eprintln!("[rbazel-rs] ERROR: {e}");
+        eprintln!("[rbazel] ERROR: {e}");
         std::process::exit(1);
     }
 }
@@ -163,10 +163,10 @@ fn run() -> Result<(), String> {
         .join(stamp.trim());
     fs::create_dir_all(&local_out_dir).map_err(|e| format!("cannot create output dir: {e}"))?;
 
-    eprintln!("[rbazel-rs] server: {}", config.server_host);
-    eprintln!("[rbazel-rs] repo:   {}", config.server_repo_dir);
-    eprintln!("[rbazel-rs] head:   {local_head}");
-    eprintln!("[rbazel-rs] pull:   {}", local_out_dir.display());
+    eprintln!("[rbazel] server: {}", config.server_host);
+    eprintln!("[rbazel] repo:   {}", config.server_repo_dir);
+    eprintln!("[rbazel] head:   {local_head}");
+    eprintln!("[rbazel] pull:   {}", local_out_dir.display());
 
     let opts_q = shell_join_quoted(&opts);
     let targets_q = shell_join_quoted(&targets);
@@ -239,11 +239,11 @@ fn run() -> Result<(), String> {
         .status();
 
     eprintln!(
-        "[rbazel-rs] OK: artifacts extracted to: {}",
+        "[rbazel] OK: artifacts extracted to: {}",
         local_out_dir.display()
     );
     eprintln!(
-        "[rbazel-rs] Tip: find debs via: find '{}' -type f -name '*.deb'",
+        "[rbazel] Tip: find debs via: find '{}' -type f -name '*.deb'",
         local_out_dir.display()
     );
     Ok(())

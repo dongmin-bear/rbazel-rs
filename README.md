@@ -1,6 +1,6 @@
 # rbazel-rs
 
-`rbazel-rs` runs Bazel on a remote server using your local git `HEAD`, then pulls artifacts back to your machine.
+`rbazel` runs Bazel on a remote server using your local git `HEAD`, then pulls artifacts back to your machine.
 
 Artifacts are extracted to `./_rbazel_artifacts/<branch>/<timestamp>/`.
 
@@ -8,7 +8,7 @@ Artifacts are extracted to `./_rbazel_artifacts/<branch>/<timestamp>/`.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/dongmin-bear/rbazel-rs/main/install.sh | bash
-rbazel-rs build //...
+rbazel build //...
 ```
 
 Install a specific version:
@@ -29,7 +29,7 @@ From source:
 
 ```bash
 cargo build --release
-install -m 0755 target/release/rbazel-rs ~/.local/bin/rbazel-rs
+install -m 0755 target/release/rbazel ~/.local/bin/rbazel
 ```
 
 Make sure `~/.local/bin` is in your `PATH`.
@@ -63,17 +63,17 @@ Use `rbazel_config.example.toml` as your template.
 ## Usage
 
 ```bash
-rbazel-rs [bazel] <subcommand> [bazel-args...]
+rbazel [bazel] <subcommand> [bazel-args...]
 ```
 
 Examples:
 
 ```bash
-rbazel-rs version
-rbazel-rs build //...
-rbazel-rs test //foo:bar
-rbazel-rs build --config=aarch64_musl //system/...:target
-rbazel-rs bazel build //...
+rbazel version
+rbazel build //...
+rbazel test //foo:bar
+rbazel build --config=aarch64_musl //system/...:target
+rbazel bazel build //...
 ```
 
 ## How It Works

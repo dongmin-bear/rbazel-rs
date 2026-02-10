@@ -43,29 +43,36 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 tag="$(printf '%s' "$release_json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')"
-asset="rbazel-rs-${tag}-${target}.tar.gz"
-asset_api="$(printf '%s' "$release_json" | python3 -c 'import json,sys; j=json.load(sys.stdin); name=sys.argv[1];
-for a in j.get("assets",[]):
-  if a.get("name")==name:
-    print(a.get("url",""));
-    break
-else:
-  raise SystemExit(1)' "$asset")"
+asset="rbazel-${tag}-${target}.tar.gz"
+asset_api="$(printf '%s' "$release_json" | python3 -c 'import json,sys; j=json.load(sys.stdin); names=[sys.argv[1],sys.argv[2]];
+for n in names:
+  for a in j.get("assets",[]):
+    if a.get("name")==n:
+      print(a.get("url",""));
+      raise SystemExit(0)
+raise SystemExit(1)' "$asset" "rbazel-rs-${tag}-${target}.tar.gz")"
 
 if [[ -z "$asset_api" ]]; then
-  echo "ERROR: release asset not found: $asset" >&2
+  echo "ERROR: release asset not found: $asset or rbazel-rs-${tag}-${target}.tar.gz" >&2
   exit 1
 fi
 
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
-echo "Downloading $asset from $OWNER_REPO ..."
-curl -fsSL "${asset_headers[@]}" "$asset_api" -o "$tmpdir/$asset"
+echo "Downloading release asset from $OWNER_REPO ..."
+curl -fsSL "${asset_headers[@]}" "$asset_api" -o "$tmpdir/release-asset.tgz"
 
 mkdir -p "$INSTALL_DIR"
-tar -xzf "$tmpdir/$asset" -C "$tmpdir"
-install -m 0755 "$tmpdir/rbazel-rs" "$INSTALL_DIR/rbazel-rs"
+tar -xzf "$tmpdir/release-asset.tgz" -C "$tmpdir"
+if [[ -f "$tmpdir/rbazel" ]]; then
+  install -m 0755 "$tmpdir/rbazel" "$INSTALL_DIR/rbazel"
+elif [[ -f "$tmpdir/rbazel-rs" ]]; then
+  install -m 0755 "$tmpdir/rbazel-rs" "$INSTALL_DIR/rbazel"
+else
+  echo "ERROR: extracted archive does not contain rbazel or rbazel-rs binary" >&2
+  exit 1
+fi
 
-echo "Installed: $INSTALL_DIR/rbazel-rs"
+echo "Installed: $INSTALL_DIR/rbazel"
 echo "If needed, add to PATH: export PATH=\"$INSTALL_DIR:\$PATH\""
