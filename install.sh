@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OWNER_REPO="${OWNER_REPO:-dmkim/rbazel-rs}"
+OWNER_REPO="${OWNER_REPO:-dongmin-bear/rbazel-rs}"
 INSTALL_DIR="${INSTALL_DIR:-${HOME}/.local/bin}"
 VERSION="${1:-latest}"
 
