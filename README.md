@@ -4,6 +4,13 @@
 
 Artifacts are extracted to `./_rbazel_artifacts/<branch>/<timestamp>/`.
 
+## Where Build Outputs Go
+
+- Default local path: `./_rbazel_artifacts/<branch>/<timestamp>/`
+- Base path can be changed with `local_pull_base` in `rbazel_config.toml`
+- The path is resolved from the git repo root where `rbazel` runs
+- Remote side uses a temporary tarball only; final artifacts remain on local machine
+
 ## Quick Start
 
 ```bash
