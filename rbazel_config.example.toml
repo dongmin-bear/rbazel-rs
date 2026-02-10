@@ -1,0 +1,15 @@
+[rbazel]
+# user@host (SSH destination)
+server_host = "user@192.168.0.10"
+
+# Absolute path to git checkout on the remote server
+server_repo_dir = "/home/user/repositories/your-bazel-repo"
+
+# Base directory on the remote server used for Bazel output/cache
+remote_cache_base = "/home/user/bazel_cache"
+
+# Local directory where artifacts are pulled to (default is ./_rbazel_artifacts)
+local_pull_base = "./_rbazel_artifacts"
+
+# Optional: if set, used directly instead of remote_cache_base + "/pennybot"
+# remote_resource_path = "/home/user/bazel_cache/your-project"
