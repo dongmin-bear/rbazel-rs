@@ -32,9 +32,17 @@ curl -fsSL https://raw.githubusercontent.com/dongmin-bear/rbazel-rs/main/install
 
 ## Installation
 
+Pre-installed dependencies:
+
+- `git`
+- Rust toolchain (`rustc`, `cargo`)
+- `install` command (usually in coreutils)
+
 From source:
 
 ```bash
+git clone https://github.com/dongmin-bear/rbazel-rs.git
+cd rbazel-rs
 cargo build --release
 install -m 0755 target/release/rbazel ~/.local/bin/rbazel
 ```
