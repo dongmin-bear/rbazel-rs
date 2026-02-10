@@ -26,14 +26,17 @@ Artifacts are extracted to:
 
 ### Option A: Install from GitHub Releases (recommended)
 
-This repo includes `install.sh` which downloads a release asset and installs `rbazel-rs` into `~/.local/bin` (configurable).
-
-Private repo note: downloading release assets requires authentication. The installer prefers `gh` (GitHub CLI). Alternatively you can provide `GITHUB_TOKEN`.
+This repo includes `install.sh` which downloads a release asset with `curl` and installs `rbazel-rs` into `~/.local/bin` (configurable).
 
 ```bash
-./install.sh
-# or
-./install.sh v0.1.0
+curl -fsSL https://raw.githubusercontent.com/dmkim/rbazel-rs/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dmkim/rbazel-rs/main/install.sh | bash -s -- v0.1.0
+```
+
+Private repo note: set `GITHUB_TOKEN` before running the script.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dmkim/rbazel-rs/main/install.sh | GITHUB_TOKEN=ghp_xxx bash
 ```
 
 ### Option B: Build locally

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OWNER_REPO="${OWNER_REPO:-<OWNER>/rbazel-rs}"
+OWNER_REPO="${OWNER_REPO:-dmkim/rbazel-rs}"
 INSTALL_DIR="${INSTALL_DIR:-${HOME}/.local/bin}"
 VERSION="${1:-latest}"
 
@@ -22,28 +22,48 @@ case "$uname_m" in
     ;;
 esac
 
-mkdir -p "$INSTALL_DIR"
-
-if command -v gh >/dev/null 2>&1; then
-  tmpdir="$(mktemp -d)"
-  trap 'rm -rf "$tmpdir"' EXIT
-
-  if [[ "$VERSION" == "latest" ]]; then
-    tag="$(gh release view -R "$OWNER_REPO" --json tagName -q .tagName)"
-  else
-    tag="$VERSION"
-  fi
-
-  asset="rbazel-rs-${tag}-${target}.tar.gz"
-  echo "Downloading $asset from $OWNER_REPO ..."
-  gh release download -R "$OWNER_REPO" "$tag" -p "$asset" -D "$tmpdir"
-
-  tar -xzf "${tmpdir}/${asset}" -C "$tmpdir"
-  install -m 0755 "${tmpdir}/rbazel-rs" "${INSTALL_DIR}/rbazel-rs"
-  echo "Installed: ${INSTALL_DIR}/rbazel-rs"
-  exit 0
+headers=(-H "Accept: application/vnd.github+json")
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  headers+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
 fi
 
-echo "ERROR: gh not found. For private repos, install gh or provide a download method with auth." >&2
-echo "Tip: https://cli.github.com/ then: gh auth login" >&2
-exit 1
+if [[ "$VERSION" == "latest" ]]; then
+  release_api="https://api.github.com/repos/${OWNER_REPO}/releases/latest"
+else
+  release_api="https://api.github.com/repos/${OWNER_REPO}/releases/tags/${VERSION}"
+fi
+
+release_json="$(curl -fsSL "${headers[@]}" "$release_api")"
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "ERROR: python3 is required by installer" >&2
+  exit 1
+fi
+
+tag="$(printf '%s' "$release_json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')"
+asset="rbazel-rs-${tag}-${target}.tar.gz"
+asset_api="$(printf '%s' "$release_json" | python3 -c 'import json,sys; j=json.load(sys.stdin); name=sys.argv[1];
+for a in j.get("assets",[]):
+  if a.get("name")==name:
+    print(a.get("url",""));
+    break
+else:
+  raise SystemExit(1)' "$asset")"
+
+if [[ -z "$asset_api" ]]; then
+  echo "ERROR: release asset not found: $asset" >&2
+  exit 1
+fi
+
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+echo "Downloading $asset from $OWNER_REPO ..."
+curl -fsSL -H "Accept: application/octet-stream" "${headers[@]}" "$asset_api" -o "$tmpdir/$asset"
+
+mkdir -p "$INSTALL_DIR"
+tar -xzf "$tmpdir/$asset" -C "$tmpdir"
+install -m 0755 "$tmpdir/rbazel-rs" "$INSTALL_DIR/rbazel-rs"
+
+echo "Installed: $INSTALL_DIR/rbazel-rs"
+echo "If needed, add to PATH: export PATH="$INSTALL_DIR:\$PATH""
