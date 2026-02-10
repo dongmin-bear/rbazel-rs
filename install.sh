@@ -22,9 +22,11 @@ case "$uname_m" in
     ;;
 esac
 
-headers=(-H "Accept: application/vnd.github+json")
+release_headers=(-H "Accept: application/vnd.github+json")
+asset_headers=(-H "Accept: application/octet-stream")
 if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-  headers+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+  release_headers+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+  asset_headers+=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
 fi
 
 if [[ "$VERSION" == "latest" ]]; then
@@ -33,7 +35,7 @@ else
   release_api="https://api.github.com/repos/${OWNER_REPO}/releases/tags/${VERSION}"
 fi
 
-release_json="$(curl -fsSL "${headers[@]}" "$release_api")"
+release_json="$(curl -fsSL "${release_headers[@]}" "$release_api")"
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "ERROR: python3 is required by installer" >&2
@@ -59,11 +61,11 @@ tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
 echo "Downloading $asset from $OWNER_REPO ..."
-curl -fsSL -H "Accept: application/octet-stream" "${headers[@]}" "$asset_api" -o "$tmpdir/$asset"
+curl -fsSL "${asset_headers[@]}" "$asset_api" -o "$tmpdir/$asset"
 
 mkdir -p "$INSTALL_DIR"
 tar -xzf "$tmpdir/$asset" -C "$tmpdir"
 install -m 0755 "$tmpdir/rbazel-rs" "$INSTALL_DIR/rbazel-rs"
 
 echo "Installed: $INSTALL_DIR/rbazel-rs"
-echo "If needed, add to PATH: export PATH="$INSTALL_DIR:\$PATH""
+echo "If needed, add to PATH: export PATH=\"$INSTALL_DIR:\$PATH\""
