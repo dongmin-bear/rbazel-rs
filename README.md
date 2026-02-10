@@ -38,6 +38,13 @@ Pre-installed dependencies:
 - Rust toolchain (`rustc`, `cargo`)
 - `install` command (usually in coreutils)
 
+Install dependency guides:
+
+- Git: https://git-scm.com/downloads
+- Rust (`rustup`): https://www.rust-lang.org/tools/install
+- Cargo Book (tooling reference): https://doc.rust-lang.org/cargo/
+- GNU Coreutils (`install` command): https://www.gnu.org/software/coreutils/
+
 From source:
 
 ```bash
